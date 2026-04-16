@@ -27,7 +27,7 @@ struct SettingsView: View {
                     }
 
                     if showAPIKeyField {
-                        SecureField("sk-...", text: $newAPIKey)
+                        SecureField("AIza...", text: $newAPIKey)
                             .textFieldStyle(.roundedBorder)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
@@ -52,9 +52,9 @@ struct SettingsView: View {
                     }
                     .disabled(!viewModel.hasAPIKey)
                 } header: {
-                    Text("OpenAI API Key")
+                    Text("Google AI API Key")
                 } footer: {
-                    Text("Your key is stored in the iOS Keychain and never sent anywhere except OpenAI.")
+                    Text("Your key is stored in the iOS Keychain and never sent anywhere except Google AI.")
                 }
 
                 // Voice section
@@ -73,16 +73,16 @@ struct SettingsView: View {
                 // Cost info section
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        CostRow(label: "Audio input", cost: "$0.06/min")
-                        CostRow(label: "Audio output", cost: "$0.24/min")
+                        CostRow(label: "Audio input", cost: "~$0.005/min")
+                        CostRow(label: "Audio output", cost: "~$0.018/min")
                         Divider()
-                        CostRow(label: "Combined", cost: "~$0.30/min")
+                        CostRow(label: "Combined", cost: "~$0.02/min")
                     }
                     .padding(.vertical, 4)
                 } header: {
                     Text("Estimated Costs")
                 } footer: {
-                    Text("Based on GPT-4o Realtime pricing. Actual costs depend on speech density.")
+                    Text("Based on Gemini Live API pricing. Actual costs depend on speech density.")
                 }
 
                 // About section
@@ -97,7 +97,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Model")
                         Spacer()
-                        Text("gpt-4o-realtime-preview")
+                        Text("gemini-2.5-flash-native-audio-preview")
                             .foregroundStyle(.secondary)
                             .font(.caption)
                     }
@@ -105,7 +105,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Session Limit")
                         Spacer()
-                        Text("60 minutes")
+                        Text("15 minutes")
                             .foregroundStyle(.secondary)
                     }
                 } header: {
@@ -130,7 +130,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This will remove your OpenAI API key. You'll need to enter it again to use VoxBridge.")
+                Text("This will remove your Google AI API key. You'll need to enter it again to use VoxBridge.")
             }
         }
     }

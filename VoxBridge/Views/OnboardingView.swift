@@ -27,14 +27,14 @@ struct OnboardingView: View {
 
             // API Key input
             VStack(alignment: .leading, spacing: 12) {
-                Text("OpenAI API Key")
+                Text("Google AI API Key")
                     .font(.headline)
 
-                Text("VoxBridge uses GPT-4o Realtime for live translation. You'll need an OpenAI API key with access to the Realtime API.")
+                Text("VoxBridge uses the Gemini Live API for real-time translation. You'll need a Google AI API key from Google AI Studio.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                SecureField("sk-...", text: $apiKeyInput)
+                SecureField("AIza...", text: $apiKeyInput)
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -46,8 +46,8 @@ struct OnboardingView: View {
                         .foregroundStyle(.red)
                 }
 
-                Link("Get an API key from OpenAI",
-                     destination: URL(string: "https://platform.openai.com/api-keys")!)
+                Link("Get an API key from Google AI Studio",
+                     destination: URL(string: "https://aistudio.google.com/apikey")!)
                     .font(.caption)
             }
             .padding(.horizontal, 24)
@@ -66,7 +66,7 @@ struct OnboardingView: View {
 
             Spacer()
 
-            Text("Your API key is stored securely in the iOS Keychain and never leaves your device except to authenticate with OpenAI.")
+            Text("Your API key is stored securely in the iOS Keychain and never leaves your device except to authenticate with Google AI.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -79,8 +79,8 @@ struct OnboardingView: View {
     private func saveKey() {
         let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
 
-        guard key.hasPrefix("sk-") else {
-            errorMessage = "API key should start with 'sk-'"
+        guard key.hasPrefix("AIza") else {
+            errorMessage = "API key should start with 'AIza'"
             showError = true
             return
         }

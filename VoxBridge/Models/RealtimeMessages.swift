@@ -2,162 +2,122 @@ import Foundation
 
 // MARK: - Client → Server Messages
 
-struct SessionUpdateMessage: Codable {
-    let type: String = "session.update"
-    let session: SessionConfig
+/// First message sent after WebSocket connects to configure the session
+struct GeminiSetupMessage: Codable {
+    let setup: SetupConfig
 
-    struct SessionConfig: Codable {
+    struct SetupConfig: Codable {
         let model: String
-        let modalities: [String]
-        let instructions: String
-        let voice: String
-        let input_audio_format: String
-        let output_audio_format: String
-        let input_audio_transcription: InputAudioTranscription?
-        let turn_detection: TurnDetection?
+        let generationConfig: GenerationConfig
+        let systemInstruction: SystemInstruction
+        let realtimeInputConfig: RealtimeInputConfig
+        let contextWindowCompression: ContextWindowCompression?
     }
 
-    struct InputAudioTranscription: Codable {
-        let model: String
+    struct GenerationConfig: Codable {
+        let responseModalities: [String]
+        let speechConfig: SpeechConfig
     }
 
-    struct TurnDetection: Codable {
-        let type: String
-        let threshold: Double
-        let prefix_padding_ms: Int
-        let silence_duration_ms: Int
+    struct SpeechConfig: Codable {
+        let voiceConfig: VoiceConfig
+    }
+
+    struct VoiceConfig: Codable {
+        let prebuiltVoiceConfig: PrebuiltVoiceConfig
+    }
+
+    struct PrebuiltVoiceConfig: Codable {
+        let voiceName: String
+    }
+
+    struct SystemInstruction: Codable {
+        let parts: [Part]
+    }
+
+    struct Part: Codable {
+        let text: String
+    }
+
+    struct RealtimeInputConfig: Codable {
+        let automaticActivityDetection: AutomaticActivityDetection
+        let inputAudioTranscription: EmptyConfig
+        let outputAudioTranscription: EmptyConfig
+    }
+
+    struct AutomaticActivityDetection: Codable {
+        let disabled: Bool
+    }
+
+    struct EmptyConfig: Codable {}
+
+    struct ContextWindowCompression: Codable {
+        let slidingWindow: SlidingWindow
+    }
+
+    struct SlidingWindow: Codable {
+        let targetTokens: Int
     }
 }
 
-struct InputAudioBufferAppend: Codable {
-    let type: String = "input_audio_buffer.append"
-    let audio: String // base64 encoded PCM16
-}
+/// Send audio data to Gemini
+struct GeminiRealtimeInput: Codable {
+    let realtimeInput: AudioPayload
 
-struct InputAudioBufferClear: Codable {
-    let type: String = "input_audio_buffer.clear"
+    struct AudioPayload: Codable {
+        let audio: AudioData
+    }
+
+    struct AudioData: Codable {
+        let data: String // base64 encoded PCM16 at 16kHz
+        let mimeType: String
+    }
 }
 
 // MARK: - Server → Client Messages
 
-/// Generic message to identify the type field
-struct ServerMessageType: Codable {
-    let type: String
-}
+/// Top-level server message — parse by checking which key exists
+/// Gemini does NOT use a "type" field; messages have different top-level keys
+struct GeminiServerMessage: Codable {
+    let setupComplete: GeminiSetupComplete?
+    let serverContent: GeminiServerContent?
 
-struct SessionCreatedMessage: Codable {
-    let type: String
-    let session: SessionInfo?
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        setupComplete = try container.decodeIfPresent(GeminiSetupComplete.self, forKey: .setupComplete)
+        serverContent = try container.decodeIfPresent(GeminiServerContent.self, forKey: .serverContent)
+    }
 
-    struct SessionInfo: Codable {
-        let id: String?
-        let model: String?
-        let voice: String?
+    private enum CodingKeys: String, CodingKey {
+        case setupComplete
+        case serverContent
     }
 }
 
-struct SessionUpdatedMessage: Codable {
-    let type: String
-}
+/// Server acknowledges setup
+struct GeminiSetupComplete: Codable {}
 
-struct ResponseAudioDelta: Codable {
-    let type: String
-    let response_id: String?
-    let item_id: String?
-    let output_index: Int?
-    let content_index: Int?
-    let delta: String // base64 encoded audio
-}
+/// Server content wrapper for model responses, transcriptions, and turn state
+struct GeminiServerContent: Codable {
+    let modelTurn: ModelTurn?
+    let turnComplete: Bool?
+    let inputTranscription: Transcription?
+    let outputTranscription: Transcription?
 
-struct ResponseAudioDone: Codable {
-    let type: String
-    let response_id: String?
-    let item_id: String?
-}
-
-struct ResponseAudioTranscriptDelta: Codable {
-    let type: String
-    let response_id: String?
-    let item_id: String?
-    let output_index: Int?
-    let content_index: Int?
-    let delta: String
-}
-
-struct ResponseAudioTranscriptDone: Codable {
-    let type: String
-    let response_id: String?
-    let item_id: String?
-    let output_index: Int?
-    let content_index: Int?
-    let transcript: String
-}
-
-struct InputAudioBufferSpeechStarted: Codable {
-    let type: String
-    let audio_start_ms: Int?
-    let item_id: String?
-}
-
-struct InputAudioBufferSpeechStopped: Codable {
-    let type: String
-    let audio_end_ms: Int?
-    let item_id: String?
-}
-
-struct ConversationItemInputAudioTranscriptionCompleted: Codable {
-    let type: String
-    let item_id: String?
-    let content_index: Int?
-    let transcript: String?
-}
-
-struct ResponseCreated: Codable {
-    let type: String
-    let response: ResponseInfo?
-
-    struct ResponseInfo: Codable {
-        let id: String?
-        let status: String?
-    }
-}
-
-struct ResponseDone: Codable {
-    let type: String
-    let response: ResponseInfo?
-
-    struct ResponseInfo: Codable {
-        let id: String?
-        let status: String?
-        let usage: UsageInfo?
+    struct ModelTurn: Codable {
+        let parts: [ModelPart]?
     }
 
-    struct UsageInfo: Codable {
-        let total_tokens: Int?
-        let input_tokens: Int?
-        let output_tokens: Int?
+    struct ModelPart: Codable {
+        let inlineData: InlineData?
     }
-}
 
-struct ErrorMessage: Codable {
-    let type: String
-    let error: ErrorDetail?
-
-    struct ErrorDetail: Codable {
-        let type: String?
-        let code: String?
-        let message: String?
+    struct InlineData: Codable {
+        let mimeType: String?
+        let data: String? // base64 encoded audio
     }
-}
 
-struct RateLimitsUpdated: Codable {
-    let type: String
-    let rate_limits: [RateLimit]?
-
-    struct RateLimit: Codable {
-        let name: String?
-        let limit: Int?
-        let remaining: Int?
-        let reset_seconds: Double?
+    struct Transcription: Codable {
+        let text: String?
     }
 }

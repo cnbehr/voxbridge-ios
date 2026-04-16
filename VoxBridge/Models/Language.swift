@@ -61,18 +61,23 @@ enum Language: String, CaseIterable, Identifiable, Codable {
 }
 
 enum Voice: String, CaseIterable, Identifiable, Codable {
-    case alloy
-    case ash
-    case ballad
-    case coral
-    case echo
-    case sage
-    case shimmer
-    case verse
+    case kore = "Kore"
+    case charon = "Charon"
+    case fenrir = "Fenrir"
+    case aoede = "Aoede"
+    case puck = "Puck"
+    case leda = "Leda"
+    case orus = "Orus"
+    case zephyr = "Zephyr"
 
     var id: String { rawValue }
 
     var displayName: String {
-        rawValue.capitalized
+        rawValue
+    }
+
+    /// The voice name sent to the Gemini API
+    var geminiVoiceName: String {
+        rawValue
     }
 }

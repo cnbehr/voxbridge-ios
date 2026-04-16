@@ -1,26 +1,34 @@
 import Foundation
 
 enum Constants {
-    static let realtimeAPIEndpoint = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview"
-    static let openAIBetaHeader = "realtime=v1"
+    static let geminiLiveEndpoint = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
 
-    static let apiSampleRate: Double = 24_000
+    static let geminiModel = "models/gemini-2.5-flash-native-audio-preview"
+
+    static let inputSampleRate: Double = 16_000
+    static let outputSampleRate: Double = 24_000
     static let apiChannelCount: UInt32 = 1
     static let captureBufferSize: UInt32 = 4096
 
     static let websocketPingInterval: TimeInterval = 15
-    static let sessionMaxDuration: TimeInterval = 59 * 60 // 59 minutes
-    static let sessionWarningDuration: TimeInterval = 55 * 60 // 55 minutes
+    static let sessionMaxDuration: TimeInterval = 15 * 60 // 15 minutes
+    static let sessionWarningDuration: TimeInterval = 13 * 60 // 13 minutes
+    static let sessionReconnectDuration: TimeInterval = 14.5 * 60 // 14.5 minutes — attempt transparent reconnect
 
     static let reconnectBaseDelay: TimeInterval = 1.0
     static let reconnectMaxDelay: TimeInterval = 30.0
 
-    // Pricing per minute (approximate, gpt-realtime-1.5)
-    static let audioInputCostPerMinute: Double = 0.06
-    static let audioOutputCostPerMinute: Double = 0.24
+    // Pricing per minute (approximate, Gemini Live API)
+    // Input: ~$0.003/1K tokens ≈ $0.0045/min
+    // Output: ~$0.012/1K tokens ≈ $0.018/min
+    static let audioInputCostPerMinute: Double = 0.0045
+    static let audioOutputCostPerMinute: Double = 0.018
 
-    static let keychainServiceName = "com.voxbridge.apikey"
-    static let keychainAccountName = "openai-api-key"
+    static let keychainServiceName = "com.voxbridge.gemini-apikey"
+    static let keychainAccountName = "google-ai-api-key"
+
+    // Context window compression for extended sessions
+    static let contextWindowTargetTokens = 10000
 
     static func systemPrompt(userLanguage: String, foreignLanguage: String) -> String {
         """
