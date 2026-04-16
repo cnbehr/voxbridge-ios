@@ -21,9 +21,9 @@ final class AudioCaptureService {
             throw AudioCaptureError.invalidFormat
         }
 
-        let apiFormat = AudioConverter.apiFormat
+        let apiInputFormat = AudioConverter.inputFormat
 
-        guard let audioConverter = AVAudioConverter(from: hardwareFormat, to: apiFormat) else {
+        guard let audioConverter = AVAudioConverter(from: hardwareFormat, to: apiInputFormat) else {
             throw AudioCaptureError.converterCreationFailed
         }
         self.converter = audioConverter

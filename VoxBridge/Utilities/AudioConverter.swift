@@ -2,17 +2,22 @@ import AVFoundation
 import Foundation
 
 enum AudioConverter {
-    /// The canonical API audio format: 24kHz PCM16 mono little-endian
-    static var apiFormat: AVAudioFormat {
-        AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: Constants.apiSampleRate, channels: 1, interleaved: true)!
+    /// Input audio format for sending to Gemini: 16kHz PCM16 mono little-endian
+    static var inputFormat: AVAudioFormat {
+        AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: Constants.inputSampleRate, channels: 1, interleaved: true)!
     }
 
-    /// Convert an AVAudioPCMBuffer from hardware format to 24kHz PCM16 mono
+    /// Output audio format for receiving from Gemini: 24kHz PCM16 mono little-endian
+    static var outputFormat: AVAudioFormat {
+        AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: Constants.outputSampleRate, channels: 1, interleaved: true)!
+    }
+
+    /// Convert an AVAudioPCMBuffer from hardware format to 16kHz PCM16 mono (for sending to API)
     static func convertToAPIFormat(buffer: AVAudioPCMBuffer, using converter: AVAudioConverter) -> AVAudioPCMBuffer? {
-        let ratio = Constants.apiSampleRate / buffer.format.sampleRate
+        let ratio = Constants.inputSampleRate / buffer.format.sampleRate
         let outputFrameCount = AVAudioFrameCount(Double(buffer.frameLength) * ratio)
 
-        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: apiFormat, frameCapacity: outputFrameCount) else {
+        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: outputFrameCount) else {
             return nil
         }
 
@@ -38,11 +43,11 @@ enum AudioConverter {
         return outputBuffer
     }
 
-    /// Convert 24kHz PCM16 mono data to an AVAudioPCMBuffer in the hardware output format
-    static func convertFromAPIFormat(data: Data, to outputFormat: AVAudioFormat) -> AVAudioPCMBuffer? {
+    /// Convert 24kHz PCM16 mono data (received from API) to an AVAudioPCMBuffer in the hardware output format
+    static func convertFromAPIFormat(data: Data, to hardwareFormat: AVAudioFormat) -> AVAudioPCMBuffer? {
         let frameCount = UInt32(data.count) / 2 // PCM16 = 2 bytes per frame per channel
 
-        guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: apiFormat, frameCapacity: frameCount) else {
+        guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: frameCount) else {
             return nil
         }
 
@@ -57,21 +62,21 @@ enum AudioConverter {
             int16Data[0].update(from: baseAddress.assumingMemoryBound(to: Int16.self), count: Int(frameCount))
         }
 
-        // If output format matches API format, return directly
-        if outputFormat.sampleRate == Constants.apiSampleRate &&
-           outputFormat.channelCount == 1 &&
-           outputFormat.commonFormat == .pcmFormatInt16 {
+        // If hardware format matches API output format, return directly
+        if hardwareFormat.sampleRate == Constants.outputSampleRate &&
+           hardwareFormat.channelCount == 1 &&
+           hardwareFormat.commonFormat == .pcmFormatInt16 {
             return inputBuffer
         }
 
-        guard let converter = AVAudioConverter(from: apiFormat, to: outputFormat) else {
+        guard let converter = AVAudioConverter(from: outputFormat, to: hardwareFormat) else {
             return nil
         }
 
-        let ratio = outputFormat.sampleRate / Constants.apiSampleRate
+        let ratio = hardwareFormat.sampleRate / Constants.outputSampleRate
         let outputFrameCount = AVAudioFrameCount(Double(frameCount) * ratio)
 
-        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputFrameCount) else {
+        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: hardwareFormat, frameCapacity: outputFrameCount) else {
             return nil
         }
 
