@@ -2,12 +2,6 @@ import SwiftUI
 
 struct ListeningView: View {
     @EnvironmentObject var viewModel: InterpreterViewModel
-    @ObservedObject private var sessionState: SessionState
-
-    init() {
-        // This will be replaced by the actual sessionState from viewModel via onAppear
-        self._sessionState = ObservedObject(wrappedValue: SessionState())
-    }
 
     var body: some View {
         VStack(spacing: 0) {

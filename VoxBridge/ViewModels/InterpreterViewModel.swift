@@ -158,6 +158,7 @@ final class InterpreterViewModel: ObservableObject {
         captureService.onAudioLevel = { [weak self] level in
             Task { @MainActor [weak self] in
                 self?.sessionState.inputAudioLevel = level
+                self?.checkSessionTimeout()
             }
         }
 

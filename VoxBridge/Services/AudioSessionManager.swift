@@ -25,7 +25,7 @@ final class AudioSessionManager: ObservableObject {
         try session.setCategory(
             .playAndRecord,
             mode: .voiceChat,
-            options: [.allowBluetooth, .allowBluetoothA2DP, .defaultToSpeaker]
+            options: [.allowBluetooth, .allowBluetoothA2DP]
         )
         try session.setActive(true)
         checkHeadphones()
