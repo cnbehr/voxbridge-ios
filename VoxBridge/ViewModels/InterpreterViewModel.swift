@@ -25,6 +25,7 @@ final class InterpreterViewModel: ObservableObject {
     private var currentTranscript = ""
     private var inputAudioBytesSent: Int = 0
     private var outputAudioBytesReceived: Int = 0
+    private var lastReconnectTime: Date = .distantPast
 
     // MARK: - Init
 
@@ -78,6 +79,7 @@ final class InterpreterViewModel: ObservableObject {
         inputAudioBytesSent = 0
         outputAudioBytesReceived = 0
         currentTranscript = ""
+        lastReconnectTime = Date()
 
         // Build setup message
         let setup = buildSetupMessage()
@@ -217,11 +219,10 @@ final class InterpreterViewModel: ObservableObject {
     }
 
     private func checkSessionTimeout() {
-        // At 14.5 minutes, attempt transparent reconnect
-        if sessionState.elapsedTime >= Constants.sessionReconnectDuration && sessionState.isListening {
+        // Transparent reconnect every ~14 minutes to stay under 15-min session limit
+        let timeSinceLastReconnect = Date().timeIntervalSince(lastReconnectTime)
+        if timeSinceLastReconnect >= Constants.sessionReconnectDuration && sessionState.isListening {
             performTransparentReconnect()
-        } else if sessionState.elapsedTime >= Constants.sessionMaxDuration {
-            stopListening()
         }
     }
 
@@ -229,6 +230,7 @@ final class InterpreterViewModel: ObservableObject {
     private func performTransparentReconnect() {
         guard let apiKey = KeychainService.retrieve() else { return }
 
+        lastReconnectTime = Date()
         print("[Interpreter] Transparent reconnect at \(Int(sessionState.elapsedTime))s")
 
         // Disconnect and immediately reconnect
